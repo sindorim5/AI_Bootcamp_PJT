@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, BigInteger, String, DateTime, func, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from utils.common_utils import current_seoul_time
+from common.utils import current_seoul_time
 
 Base = declarative_base()
 
