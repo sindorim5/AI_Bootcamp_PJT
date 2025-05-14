@@ -29,7 +29,7 @@ class UserRepository:
             logger.error(f"UserRepository get_user_by_id: {str(e)}")
             raise e
 
-    def create_user(self, user: User) -> Boolean:
+    def create_user(self, user: User) -> bool:
         try:
             with db_session.get_db_session() as session:
                 session.add(user)
