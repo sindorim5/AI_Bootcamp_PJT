@@ -37,7 +37,7 @@ class DatabaseSession:
         logger.info("database initialize end")
 
     @st.cache_resource
-    def get_connection(self):
+    def get_connection(_self):
         return st.connection(DB_TYPE, type="sql", url=DATABASE_URL)
 
     def get_session(self):

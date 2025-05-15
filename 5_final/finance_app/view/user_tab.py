@@ -1,12 +1,16 @@
 import streamlit as st
 import logging
+from controller.user_controller import UserController
 
 logger = logging.getLogger(__name__)
+
+userController = UserController()
 
 def render_user_tab():
     default_user_name = st.session_state.get("user_name", "")
     default_capital = st.session_state.get("capital", 10.0)
     default_risk_level = st.session_state.get("risk_level", 3)
+
 
     with st.form("user_form", border=False):
 
@@ -55,29 +59,23 @@ def render_user_tab():
                 st.error("불러오기 실패")
 
 def save_user_info(user_name: str, capital: float, risk_level: int) -> bool:
-    try:
-        clean_name = user_name.replace(" ", "")
+    # input 검증
+    clean_name = user_name.replace(" ", "")
 
-        if not clean_name:
-            st.error("공백은 사용할 수 없습니다.")
-            return False
-        elif len(clean_name) != len(user_name):
-            st.error("공백은 사용할 수 없습니다.")
-            return False
-
-        st.session_state.update(
-            {
-                "user_name": user_name,
-                "capital": capital,
-                "risk_level": risk_level,
-
-            }
-        )
-        logger.info("저장: %s / %d / %d", user_name, risk_level, capital)
-        return True
-    except Exception as e:
-        logger.error(f"save_user_info: {str(e)}")
+    if not clean_name:
+        st.error("공백은 사용할 수 없습니다.")
         return False
+    elif len(clean_name) != len(user_name):
+        st.error("공백은 사용할 수 없습니다.")
+        return False
+
+    # DB, session에 사용자 정보 저장
+    result = userController.on_save_btn(user_name, capital, risk_level)
+    if result:
+        return True
+    else:
+        return False
+
 
 def load_user_info(user_name: str) -> bool:
     try:
