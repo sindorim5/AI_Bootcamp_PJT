@@ -7,10 +7,6 @@ logger = logging.getLogger(__name__)
 userController = UserController()
 
 def render_user_tab():
-    default_user_name = st.session_state.get("user_name", "")
-    default_capital = st.session_state.get("capital", 10.0)
-    default_risk_level = st.session_state.get("risk_level", 3)
-
 
     with st.form("user_form", border=False):
 
@@ -19,7 +15,7 @@ def render_user_tab():
             placeholder="이름을 입력하세요.",
             help="공백 제외 최대 10자 이내",
             max_chars=10,
-            value=default_user_name,
+            value=st.session_state.get("user_name"),
             key="input_user_name",
         )
 
@@ -28,7 +24,7 @@ def render_user_tab():
             min_value=10.0,
             step=1.0,
             format="%0f",
-            value=float(default_capital),
+            value=float(st.session_state.get("capital")),
             key="input_capital"
         )
 
@@ -37,7 +33,7 @@ def render_user_tab():
                 min_value=1,
                 max_value=5,
                 help="1: 안정형, 5: 공격투자형",
-                value=default_risk_level,
+                value=st.session_state.get("risk_level"),
                 key="input_risk_level"
             )
 
@@ -52,11 +48,32 @@ def render_user_tab():
                 st.error("저장 실패")
 
         if load_btn:
-            result = load_user_info("test_user")
+            result = load_user_info(user_name)
             if result:
                 st.success("불러오기 성공")
             else:
                 st.error("불러오기 실패")
+
+
+    if (
+        st.session_state.get("user_name")
+        and st.session_state.get("capital") is not None
+        and st.session_state.get("risk_level") is not None
+    ):
+        st.markdown(f"""
+        ### 사용자 정보
+
+        - **이름:** {st.session_state['user_name']}
+        - **자본금:** {st.session_state['capital']:.0f}만원
+        - **투자성향:** {st.session_state['risk_level']}점
+        """)
+    else:
+        st.markdown(
+            """
+            ### 사용자 정보
+            - 이름을 입력하여 사용자 정보를 저장 혹은 불러와주세요.
+            """
+        )
 
 def save_user_info(user_name: str, capital: float, risk_level: int) -> bool:
     # input 검증
@@ -78,23 +95,20 @@ def save_user_info(user_name: str, capital: float, risk_level: int) -> bool:
 
 
 def load_user_info(user_name: str) -> bool:
+
+    clean_name = user_name.replace(" ", "")
+
+    if not clean_name:
+        st.error("공백은 사용할 수 없습니다.")
+        return False
+    elif len(clean_name) != len(user_name):
+        st.error("공백은 사용할 수 없습니다.")
+        return False
+
     try:
         # user_name으로 DB에서 사용자 정보 조회
-        capital = 999.0
-        risk_level = 5
-
-        st.session_state.update(
-            {
-                "user_name": user_name,
-                "capital": capital,
-                "risk_level": risk_level,
-                "input_user_name": user_name,
-                "input_capital": capital,
-                "input_risk_level": risk_level
-            }
-        )
-
-        if user_name and capital and risk_level:
+        user = userController.on_load_btn(user_name)
+        if user:
             return True
         else:
             return False

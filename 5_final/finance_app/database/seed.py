@@ -27,11 +27,10 @@ def seed():
         if agent_count == 0:
             # Default agent list
             agents = [
-                Agent(name="MarketData"),
-                Agent(name="Retriever"),
-                Agent(name="Analysis"),
-                Agent(name="Portfolio"),
-                Agent(name="Summary"),
+                Agent(agent_id = 1, name="MarketData"),
+                Agent(agent_id = 2, name="Retriever"),
+                Agent(agent_id = 3, name="Analysis"),
+                Agent(agent_id = 4, name="Portfolio"),
             ]
             db.add_all(agents)
             db.commit()

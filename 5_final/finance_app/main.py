@@ -12,6 +12,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def init_session_state():
+    st.session_state["app_mode"] = constants.Mode.Application
+    st.session_state["user_name"] = ""
+    st.session_state["capital"] = 10.0
+    st.session_state["risk_level"] = 3
+
     return None
 
 def render_ui():
@@ -27,10 +32,16 @@ def render_ui():
 
     sidebar.render_sidebar()
 
-    return None
+    current_mode = st.session_state.get("app_mode")
+
+    # if current_mode == constants.Mode.Portfolio:
+    #     # display_portfolio()
+    # elif current_mode == constants.Mode.History:
+    #     # display_history()
+
 
 if __name__ == "__main__":
-    # init_session_state()
+    init_session_state()
 
     db_session.initialize()
 

@@ -1,6 +1,6 @@
 import streamlit as st
 from common import constants
-from view import user_tab
+from view import user_tab, new_conv_tab
 
 def render_sidebar():
     with st.sidebar:
@@ -12,8 +12,8 @@ def render_sidebar():
         with tab1:
             user_tab.render_user_tab()
 
-        # with tab2:
-        #     render_new_tab()
+        with tab2:
+            new_conv_tab.render_new_tab()
 
         # with tab3:
         #     render_history_tab()

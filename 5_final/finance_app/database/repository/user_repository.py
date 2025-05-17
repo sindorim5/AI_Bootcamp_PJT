@@ -44,28 +44,36 @@ class UserRepository:
             logger.error(f"UserRepository get_user_by_name: {str(e)}")
             raise e
 
-    def create_user(self, user: User) -> bool:
+    def create_user(self, name: str, capital: float, risk_level: int) -> bool:
         try:
             with db_session.get_db_session() as session:
-                session.add(user)
+                temp_user = User(name=name, capital=capital, risk_level=risk_level)
+                session.add(temp_user)
                 return True
+        except RepositoryError as e:
+            logger.error(f"UserRepository create_user: {str(e)}")
+            raise e
         except Exception as e:
             logger.error(f"UserRepository create_user: {str(e)}")
             raise e
 
-    def update_user(self, user: User, capital, risk_level) -> bool:
+    def update_user(self, user_id: int, capital: float, risk_level: int) -> bool:
         try:
             with db_session.get_db_session() as session:
-                existing_user = session.query(User).filter(User.user_id == user.user_id).first()
-                if existing_user:
-                    existing_user.capital = capital
-                    existing_user.risk_level = risk_level
-                    return True
-                else:
-                    raise RepositoryError(f"User with id {user.user_id} not found")
+                updated = (
+                    session
+                    .query(User)
+                    .filter(User.user_id == user_id)
+                    .update({
+                        "capital": capital,
+                        "risk_level": risk_level
+                    })
+                )
+                return updated == 1
         except RepositoryError as e:
-            return False
-        except Exception as e:
+            logger.error(f"UserRepository create_user: {str(e)}")
+            raise e
+        except Exception as e :
             logger.error(f"UserRepository update_user: {str(e)}")
             raise e
 

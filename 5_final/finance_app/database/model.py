@@ -25,6 +25,7 @@ class Session(Base):
     audit_dtm  = Column(DateTime(timezone=True), default=current_seoul_time, nullable=False)
     capital    = Column(BigInteger, nullable=False)
     risk_level = Column(Integer, nullable=False)
+    topic      = Column(String, nullable=False)
 
 class SessionDetail(Base):
     __tablename__ = 'session_details'
