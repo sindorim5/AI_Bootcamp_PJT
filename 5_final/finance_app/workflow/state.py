@@ -19,17 +19,30 @@ class AgentType:
             return role
 
 class ChatState(TypedDict):
-    topic: str
-    user_name: str
-    capital: float
-    risk_level: int
-    session_id: int
-    session_seq: int
+    topic: str           # 사용자의 질문 주제 (ex. "반도체 산업 전망")
+    user_name: str       # 사용자 이름
+    capital: float       # 투자 자본금 (만원 단위 등)
+    risk_level: int      # 위험 성향 (1 ~ 5 등급)
 
 class AgentState(TypedDict):
-    chat_state: Dict[str, Any]  # 사용자 입력
-    agent_id: int               # Agent 역할 (분석, 시장 데이터, 정보 검색 등)
-    context: str                # retrieve_context에서 수집된 doc를 정리, LLM에 전달할 메시지
-    messages: List[BaseMessage] # prepare_messages에서 생성된 메시지
-    response: str               # generate_response에서 생성된 LLM의 응답
-    documents: List[Document]   # retrieve_context에서 검색된 문서
+    chat_state: Dict[str, Any]       # 사용자 입력 정보
+    agent_id: int                    # 현재 실행 중인 Agent ID
+
+    # MarketDataAgent 결과
+    market_data_docs: List[Document] # 수집된 시세/지표 데이터 문서들
+    market_data_response: str        # MarketDataAgent의 LLM 해석 결과
+
+    # RetrieverAgent 결과
+    retrieve_docs: List[Document]    # 수집된 뉴스/리포트 문서들
+    retrieve_response: str           # RetrieverAgent의 요약/해석 결과
+
+    # AnalysisAgent 결과
+    analysis_response: str           # MarketData + Retrieve를 해석한 종합 분석
+
+    # PortfolioAgent 결과
+    portfolio_response: str          # 자산배분 시나리오 제안 결과
+
+    # Agent 실행 시 사용하는 임시 필드 (LLM 프롬프트용)
+    context: str                     # 이번 Agent에서 전달할 context (docs 요약 등)
+    messages: List[BaseMessage]      # 이번 Agent에서 전달할 LLM messages
+    response: str                    # 이번 Agent에서 받은 LLM 응답

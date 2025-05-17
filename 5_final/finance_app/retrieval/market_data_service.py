@@ -4,6 +4,10 @@ from langchain.schema import Document
 from langchain_core.messages import HumanMessage, SystemMessage
 from common.config import get_llm
 from common.constants import Agent
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # 관련된 종목 찾기
 def suggest_related_tickers(
@@ -11,8 +15,8 @@ def suggest_related_tickers(
 ) -> List[str]:
 
     prompt = (
-        f"자본금 {capital}만원, 위험성향 {risk_level}인 투자자에게 필요한 "
-        "'{topic}'라는 주제와 관련된 대표 종목 5개의 **yfinance ticker**를 알려주세요. "
+        f"자본금 {capital}만원, 위험성향 {risk_level}(1 ~ 5등급, 숫자가 클수록 공격투자형)인 투자자에게 필요한 "
+        f"'{topic}'라는 주제와 관련된 대표 종목 5개의 **yfinance ticker**를 알려주세요. "
         "yfinance ticker라는 정확한 포맷으로 반환하고, 각 ticker는 콤마로 구분해주세요. "
         "예시: 005930.KS, NVDA, ^GSPC 처럼 반환하세요. 설명은 절대 하지 마세요."
     )
@@ -33,7 +37,7 @@ def suggest_related_tickers(
 def fetch_stock_data(tickers: List[str]) -> List[Document]:
     documents = []
     data = yf.download(tickers, period="1mo", interval="1d", progress=False)
-
+    logger.info(f"Fetched stock data: {data}")
     for ticker in tickers:
         if ticker not in data["Close"].columns:
             continue
@@ -42,10 +46,13 @@ def fetch_stock_data(tickers: List[str]) -> List[Document]:
         open_price = data["Open"][ticker].iloc[-1]
         change = ((close - open_price) / open_price) * 100
 
+        info = yf.Ticker(ticker).info
+        name = info.get("shortName") or info.get("longName") or ticker
         doc = Document(
             page_content=f"{ticker} 종목 현재가: {close:.2f} USD, 변동률: {change:+.2f}%",
             metadata={
                 "ticker": ticker,
+                "name": name,
                 "section": "stock",
                 "price": close,
                 "change": f"{change:+.2f}%",
