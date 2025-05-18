@@ -1,4 +1,5 @@
 from database.repository.user_repository import user_repository
+from database.repository.session_repository import session_repository
 from database.model import User
 import streamlit as st
 import logging
@@ -18,7 +19,7 @@ class UserController:
         return cls._instance
 
     def on_save_btn(self, user_name: str, capital: float, risk_level:int) -> bool:
-        logger.debug("UserController on_save_btn: %s / %d / %d", user_name, risk_level, capital)
+        logger.info("UserController on_save_btn: %s / %d / %d", user_name, risk_level, capital)
         try:
             user = user_repository.get_user_by_name(user_name)
             # 검색된 유저가 없으므로 신규 생성
@@ -55,6 +56,8 @@ class UserController:
         if user is None:
             return False
         else:
+            sessions = session_repository.get_session_by_user_id(user.user_id)
+
             st.session_state.update(
                     {
                         "user_name": user.name,
@@ -62,4 +65,9 @@ class UserController:
                         "risk_level": user.risk_level
                     }
                 )
+
+            if sessions:
+                st.session_state['sessions'] = sessions
             return user
+
+userController = UserController()

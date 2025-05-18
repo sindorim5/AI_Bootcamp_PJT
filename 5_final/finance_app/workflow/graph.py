@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, END
-from workflow.state import ChatState, AgentType
+from workflow.state import AgentState
 from common.constants import Agent
 from workflow.agent.market_data_agent import MarketDataAgent
 from workflow.agent.retrieve_agent import RetrieveAgent
@@ -9,7 +9,7 @@ from workflow.agent.portfolio_agent import PortfolioAgent
 import uuid
 
 def create_graph(rag: bool, langfuse_session_id: str = None) -> StateGraph:
-    workflow = StateGraph(ChatState)
+    workflow = StateGraph(AgentState)
     langfuse_session_id = langfuse_session_id or str(uuid.uuid4())
 
     market_data_agent = MarketDataAgent(rag=rag, langfuse_session_id=langfuse_session_id)
@@ -18,10 +18,10 @@ def create_graph(rag: bool, langfuse_session_id: str = None) -> StateGraph:
     portfolio_agent = PortfolioAgent(rag=rag, langfuse_session_id=langfuse_session_id)
 
 
-    workflow.add_node(Agent.MarketData, market_data_agent)
+    workflow.add_node(Agent.MarketData, market_data_agent.run)
     workflow.add_node(Agent.Retrieve, retrieve_agent.run)
-    workflow.add_node(Agent.Analysis, analysis_agent)
-    workflow.add_node(Agent.Portfolio, portfolio_agent)
+    workflow.add_node(Agent.Analysis, analysis_agent.run)
+    workflow.add_node(Agent.Portfolio, portfolio_agent.run)
 
     workflow.add_edge(Agent.MarketData, Agent.Retrieve)
     workflow.add_edge(Agent.Retrieve, Agent.Analysis)

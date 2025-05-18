@@ -1,4 +1,5 @@
-from base_agent import BaseAgent, AgentState
+from workflow.agent.base_agent import BaseAgent
+from workflow.state import AgentState
 from retrieval.market_data_service import suggest_related_tickers, get_market_data
 from typing import Dict, Any
 from common.constants import Agent

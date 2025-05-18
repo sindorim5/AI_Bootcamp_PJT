@@ -5,6 +5,10 @@ from duckduckgo_search import DDGS
 from langchain.schema import Document
 from langchain.schema import HumanMessage, SystemMessage
 from common.config import get_llm
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 def generate_finance_queries(topic: str, capital: float, risk_level: int) -> List[str]:
     """LLM에게 금융 뉴스·리포트 검색어 3개를 제안받습니다."""

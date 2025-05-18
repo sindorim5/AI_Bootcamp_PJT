@@ -36,26 +36,61 @@ def suggest_related_tickers(
 # 종목 시세 가져오기
 def fetch_stock_data(tickers: List[str]) -> List[Document]:
     documents = []
-    data = yf.download(tickers, period="1mo", interval="1d", progress=False)
-    logger.info(f"Fetched stock data: {data}")
+    data = yf.download(
+        tickers,
+        period="2mo",
+        interval="1d",
+        progress=False,
+        threads=False,
+    )
+
     for ticker in tickers:
-        if ticker not in data["Close"].columns:
+        # 멀티티커 → DataFrame, 단일티커 → Series 형태일 수 있음
+        try:
+            close_val = data["Close"][ticker].iloc[-1]
+            open_val  = data["Open"][ticker].iloc[-1]
+        except (KeyError, IndexError, TypeError):
+            # 컬럼이 없거나 빈 Series 인 경우
+            doc = Document(
+                page_content=f"{ticker} 종목: 데이터 없음",
+                metadata={
+                    "ticker": ticker,
+                    "section": "stock",
+                    "price": None,
+                    "change": "없음",
+                },
+            )
+            documents.append(doc)
             continue
 
-        close = data["Close"][ticker].iloc[-1]
-        open_price = data["Open"][ticker].iloc[-1]
-        change = ((close - open_price) / open_price) * 100
+        # NaN 검사
+        if _is_nan(close_val) or _is_nan(open_val):
+            doc = Document(
+                page_content=f"{ticker} 종목: 데이터 없음",
+                metadata={
+                    "ticker": ticker,
+                    "section": "stock",
+                    "price": None,
+                    "change": "없음",
+                },
+            )
+            documents.append(doc)
+            continue
+
+        # 정상 데이터라면 변동률 계산
+        change_pct = (close_val - open_val) / open_val * 100
 
         info = yf.Ticker(ticker).info
         name = info.get("shortName") or info.get("longName") or ticker
+
         doc = Document(
-            page_content=f"{ticker} 종목 현재가: {close:.2f} USD, 변동률: {change:+.2f}%",
+            page_content=f"{ticker} 종목 현재가: {close_val:.2f} USD, 변동률: {change_pct:+.2f}%",
             metadata={
                 "ticker": ticker,
                 "name": name,
                 "section": "stock",
-                "price": close,
-                "change": f"{change:+.2f}%",
+                "price": float(close_val),
+                "change": f"{change_pct:+.2f}%",
             },
         )
         documents.append(doc)
@@ -64,7 +99,7 @@ def fetch_stock_data(tickers: List[str]) -> List[Document]:
 
 # 주요 지수/금리/환율 데이터 가져오기
 def fetch_macro_data() -> List[Document]:
-    macro_tickers = {
+    macro_tickers: Dict[str, str] = {
         "S&P500": "^GSPC",
         "NASDAQ": "^IXIC",
         "KOSPI": "^KS11",
@@ -74,29 +109,84 @@ def fetch_macro_data() -> List[Document]:
         "WTI 원유": "CL=F",
     }
 
-    data = yf.download(list(macro_tickers.values()), period="1d", interval="1d", progress=False)
+    data = yf.download(
+        list(macro_tickers.values()),
+        period="2mo",
+        interval="1d",
+        progress=False,
+        threads=False,
+        group_by="column"
+    )
 
-    documents = []
+    # 멀티-인덱스를 티커별 Close / Open 테이블로 변환
+    #   * yfinance 0.2.x: ('Price','Close',ticker)
+    if data.columns.nlevels == 3:
+        close_df = data.xs("Close", level=1, axis=1)
+        open_df  = data.xs("Open",  level=1, axis=1)
+    else:
+        close_df = data["Close"]
+        open_df  = data["Open"]
+
+    documents: List[Document] = []
+
     for name, ticker in macro_tickers.items():
-        if ticker not in data["Close"].columns:
+        # 컬럼 자체가 없으면 스킵
+        if ticker not in close_df.columns:
             continue
 
-        close = data["Close"][ticker].iloc[-1]
-        open_price = data["Open"][ticker].iloc[-1]
-        change = ((close - open_price) / open_price) * 100
+        # 최근 유효값 추출(dropna 로 NaN 제거)
+        close_series = close_df[ticker].dropna()
+        open_series  = open_df[ticker].dropna()
 
-        doc = Document(
-            page_content=f"{name} 현재가: {close:.2f}, 변동률: {change:+.2f}%",
-            metadata={
-                "indicator": name,
-                "section": "macro",
-                "price": close,
-                "change": f"{change:+.2f}%",
-            },
+        if close_series.empty or open_series.empty:
+            # 데이터 완전 없음
+            doc = Document(
+                page_content=f"{name} 데이터 없음",
+                metadata={
+                    "indicator": name,
+                    "section": "macro",
+                    "price": None,
+                    "change": "없음",
+                },
+            )
+            documents.append(doc)
+            continue
+
+        close_val = close_series.iloc[-1]
+        open_val  = open_series.iloc[-1]
+
+        # NaN 방어(혹시 남아 있을 경우)
+        if _is_nan(close_val) or _is_nan(open_val):
+            doc = Document(
+                page_content=f"{name} 데이터 없음",
+                metadata={
+                    "indicator": name,
+                    "section": "macro",
+                    "price": None,
+                    "change": "없음",
+                },
+            )
+            documents.append(doc)
+            continue
+
+        change_pct = (close_val - open_val) / open_val * 100
+
+        documents.append(
+            Document(
+                page_content=f"{name} 현재가: {close_val:.2f}, 변동률: {change_pct:+.2f}%",
+                metadata={
+                    "indicator": name,
+                    "section": "macro",
+                    "price": float(close_val),
+                    "change": f"{change_pct:+.2f}%",
+                },
+            )
         )
-        documents.append(doc)
 
     return documents
+
+def _is_nan(x) -> bool:
+    return x != x
 
 # 전체 MarketData Agent
 def get_market_data(tickers: List[str]) -> List[Document]:

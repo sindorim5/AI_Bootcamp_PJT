@@ -30,9 +30,5 @@ class Session(Base):
 class SessionDetail(Base):
     __tablename__ = 'session_details'
     session_id    = Column(Integer, ForeignKey('sessions.session_id'), primary_key=True)
-    session_seq   = Column(Integer, primary_key=True)
     audit_dtm     = Column(DateTime(timezone=True), default=current_seoul_time, nullable=False)
-    user_input    = Column(Text, nullable=True)
-    agent_id      = Column(Integer, ForeignKey('agents.agent_id'), nullable=False)
-    agent_message = Column(Text, nullable=False)
-    docs          = Column(Text, nullable=True)
+    response      = Column(Text, nullable=True)

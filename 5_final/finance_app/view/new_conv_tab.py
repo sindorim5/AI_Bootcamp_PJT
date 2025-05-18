@@ -8,12 +8,20 @@ logger = logging.getLogger(__name__)
 convController = ConvController()
 
 def render_new_tab():
+    default_topic = st.session_state.get("topic", "")
+
+    logger.info("대화 주제: %s", st.session_state.get("input_topic"))
+    logger.info("이름: %s", st.session_state.get("user_name"))
+    logger.info("자본금: %s", st.session_state.get("capital"))
+    logger.info("투자성향: %s", st.session_state.get("risk_level"))
+
 
     with st.form("new_conv_form", border=False):
         # 대화 주제 입력
         topic = st.text_input(
             label="대화 주제를 입력하세요",
             placeholder="ex) 주식 투자에 대해 이야기해줘",
+            value=default_topic,
             key="input_topic"
         )
 
@@ -31,13 +39,13 @@ def render_new_tab():
 
             try:
                 logger.info("대화 주제: %s", st.session_state.get("input_topic"))
-                logger.info("대화 주제: %s", st.session_state.get("user_name"))
-                logger.info("대화 주제: %s", st.session_state.get("capital"))
-                logger.info("대화 주제: %s", st.session_state.get("risk_level"))
+                logger.info("이름: %s", st.session_state.get("user_name"))
+                logger.info("자본금: %s", st.session_state.get("capital"))
+                logger.info("투자성향: %s", st.session_state.get("risk_level"))
 
-                result = start_session()
+                result = start_session(topic)
                 if result:
-                    None
+                    pass
                 else:
                     st.error("대화 시작 실패")
             except ValueError as ve:
@@ -57,7 +65,7 @@ def start_session(topic: str) -> bool:
         raise ValueError("공백은 사용할 수 없습니다.")
 
     # DB, session에 대화 주제 저장
-    result = convController.on_new_conv_btn()
+    result = convController.on_new_conv_btn(clean_topic)
 
     if result:
         return True

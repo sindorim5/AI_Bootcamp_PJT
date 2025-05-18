@@ -63,5 +63,5 @@ class DatabaseSession:
             session.close()
 
 
-# module‐level singleton
+# singleton
 db_session = DatabaseSession()

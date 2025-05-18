@@ -1,12 +1,15 @@
 import streamlit as st
 import logging
-from controller.user_controller import UserController
+from controller.user_controller import userController
 
 logger = logging.getLogger(__name__)
 
-userController = UserController()
+
 
 def render_user_tab():
+    default_user_name = st.session_state.get("user_name", "")
+    default_capital = float(st.session_state.get("capital", 10.0))
+    default_risk_level = st.session_state.get("risk_level", 3)
 
     with st.form("user_form", border=False):
 
@@ -15,7 +18,7 @@ def render_user_tab():
             placeholder="이름을 입력하세요.",
             help="공백 제외 최대 10자 이내",
             max_chars=10,
-            value=st.session_state.get("user_name"),
+            value=default_user_name,
             key="input_user_name",
         )
 
@@ -24,7 +27,7 @@ def render_user_tab():
             min_value=10.0,
             step=1.0,
             format="%0f",
-            value=float(st.session_state.get("capital")),
+            value=default_capital,
             key="input_capital"
         )
 
@@ -33,7 +36,7 @@ def render_user_tab():
                 min_value=1,
                 max_value=5,
                 help="1: 안정형, 5: 공격투자형",
-                value=st.session_state.get("risk_level"),
+                value=default_risk_level,
                 key="input_risk_level"
             )
 

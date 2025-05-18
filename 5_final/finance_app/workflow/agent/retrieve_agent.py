@@ -1,8 +1,10 @@
 from typing import Dict, Any
-from base_agent import BaseAgent
-from state import AgentState
+from workflow.agent.base_agent import BaseAgent
+from workflow.state import AgentState
 from retrieval.vector_store import search_topic
+import logging
 
+logger = logging.getLogger(__name__)
 
 class RetrieveAgent(BaseAgent):
     def __init__(self, rag: bool, langfuse_session_id: str):

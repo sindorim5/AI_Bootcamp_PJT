@@ -6,9 +6,12 @@ from langgraph.graph import StateGraph, END
 from langfuse.callback import CallbackHandler
 from common.config import get_llm
 from common.constants import Agent
-from state import AgentState, ChatState
+from workflow.state import AgentState, ChatState
 import streamlit as st
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 class BaseAgent(ABC):
     def __init__(self, system_prompt: str, rag: bool, langfuse_session_id: str = None):
@@ -39,7 +42,10 @@ class BaseAgent(ABC):
         pass
 
     # 검색 결과로 Context 생성
-    def _format_context(self, docs: list) -> str:
+    def _format_context(self, docs) -> str:
+        # 문자열을 그대로 받으면 바로 반환
+        if isinstance(docs, str):
+            return docs
 
         context = ""
         for i, doc in enumerate(docs):
@@ -78,30 +84,7 @@ class BaseAgent(ABC):
 
         return {**state, **updates}
 
-    def initialize_state(self) -> AgentState:
-        chat_state = ChatState(
-            topic = st.session_state["topic"],
-            user_name = st.session_state["user_name"],
-            capital = st.session_state["capital"],
-            risk_level = st.session_state["risk_level"],
-        )
-
-        return AgentState(
-            chat_state=chat_state,
-            agent_id=0,
-            market_data_docs=[],         # MarketDataAgent 결과 보관용
-            market_data_response="",     # MarketDataAgent 해석 결과
-            retrieve_docs=[],            # RetrieverAgent 결과 보관용
-            retrieve_response="",        # RetrieverAgent 해석 결과
-            analysis_response="",        # AnalysisAgent 결과
-            portfolio_response="",       # PortfolioAgent 결과
-            context="",                  # 현재 Agent가 사용할 컨텍스트
-            messages=[],                 # 현재 Agent가 사용할 메시지
-            response=""                  # 현재 Agent가 받은 응답
-        )
-
-    def run(self) -> str:
-        state = self.initialize_state()
+    def run(self, state: AgentState) -> AgentState:
         langfuse_handler = CallbackHandler(session_id=self.langfuse_session_id)
         result = self.graph.invoke(state, config={"callbacks":[langfuse_handler]})
-        return result["response"]
+        return result

@@ -1,6 +1,6 @@
 from typing import Dict, Any
-from base_agent import BaseAgent
-from state import AgentState
+from workflow.agent.base_agent import BaseAgent
+from workflow.state import AgentState
 
 
 class PortfolioAgent(BaseAgent):
