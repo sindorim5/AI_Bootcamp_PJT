@@ -11,22 +11,35 @@ import logging
 logger = logging.getLogger(__name__)
 
 def generate_finance_queries(topic: str, capital: float, risk_level: int) -> List[str]:
-    """LLM에게 금융 뉴스·리포트 검색어 3개를 제안받습니다."""
-    template = (
-        f"'{topic}'이라는 질문에 대해 "
-        f"자본금 {capital}만원, 위험성향 {risk_level}(1 ~ 5등급, 숫자가 클수록 공격투자형)인 투자자에게 필요한 "
-        "시세/시장/뉴스 데이터를 찾기 위한 검색어를 3개 제안해주세요."
-        "네이버 블로그나 네이버 증권은 참고하지 말아주세요."
-        "각 검색어는 25자 이내로 콤마로 구분하고 설명은 하지 마세요."
-    )
-    prompt = template.format(topic=topic)
+    """
+    투자자 프로필에 맞춘 금융 검색 키워드 3개를 생성한다.
+    """
+    system_prompt = ("""
+        "You are an expert financial search query designer. "
+        "Your job is to craft concise, high-signal queries that surface reliable and up-to-date "
+        "financial market/news data. Adhere strictly to the output rules. Do not add explanations."
+    """)
 
-    messages = [
-        SystemMessage("당신은 금융 분야 데이터 검색 전문가입니다."),
-        HumanMessage(prompt),
-    ]
-    response = get_llm().invoke(messages)
-    return [q.strip() for q in response.content.split(",")][:3]
+    user_prompt = (
+        f"For the topic '{topic}', considering capital {capital} (KRW, 만원 unit) "
+        f"and risk level {risk_level} (1=conservative, 5=aggressive), "
+        "propose exactly 3 high-signal web search queries to retrieve timely and reliable "
+        "financial news/reports.\n"
+        "Constraints:\n"
+        "- Each query must be <= 25 characters (including spaces).\n"
+        "- Return a single line with 3 queries, comma-separated. Do NOT add any explanation or extra text.\n"
+        "- Prefer authoritative sources and recent information (last 90 days) where possible.\n"
+        "- Use English keywords; include relevant tickers/indexes when appropriate (e.g., NVDA, ^GSPC, 005930.KS, USDKRW=X).\n"
+        "- Exclude low-signal Korean portals/forums using operators: "
+        "-site:blog.naver.com -site:stock.naver.com -site:cafe.naver.com -site:naver.com -site:dcinside.com\n"
+        "- Consider helpful operators when relevant: quotes, AND/OR, site:, intitle:, filetype:pdf.\n"
+        "Output format (exactly one line): <query1>, <query2>, <query3>"
+    )
+
+    messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
+    resp = get_llm().invoke(messages).content.strip().split("\n")
+    return [kw.strip() for kw in resp if kw.strip()][:3]
+
 
 def fetch_finance_documents(
     queries: List[str],

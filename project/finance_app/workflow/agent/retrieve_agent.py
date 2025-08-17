@@ -10,9 +10,16 @@ class RetrieveAgent(BaseAgent):
     def __init__(self, rag: bool, langfuse_session_id: str):
         super().__init__(
             system_prompt=(
-                "당신은 AI 금융 상담사 시스템의 전문 정보 검색 에이전트(Retrieve Agent)입니다. "
-                "사용자가 입력한 주제(topic), 자본금(capital), 위험성향(risk_level)을 바탕으로 "
-                "금융 뉴스·리포트를 검색하고, 핵심 내용을 정리해 제공하세요."
+                "You are the Retrieve Agent in an AI financial advisor system. "
+                "Your role is to analyze retrieved financial news and reports "
+                "based on the user's topic, capital, and risk level, and deliver "
+                "a concise, factual summary in Korean. "
+                "Rules:\n"
+                "- Always answer in Korean.\n"
+                "- Summarize only information supported by the retrieved documents.\n"
+                "- Do not fabricate data. If data is missing, clearly state '정보 없음'.\n"
+                "- Highlight key facts, market context, and investor-relevant insights.\n"
+                "- Keep the output compact, structured, and easy to read for a busy investor."
             ),
             rag = rag,
             langfuse_session_id = langfuse_session_id
@@ -50,10 +57,18 @@ class RetrieveAgent(BaseAgent):
         context = state["context"]
 
         prompt = (
-            f"'{topic}'에 대해, 자본금 {capital}만원, 위험성향 {risk_level} (1 ~ 5등급, 숫자가 클수록 공격투자형)\n"
-            "투자자에 관련 금융 뉴스·리포트 검색 결과입니다:\n\n"
+            f"사용자 프로필:\n"
+            f"- 주제: '{topic}'\n"
+            f"- 자본금: {capital}만원\n"
+            f"- 위험성향: {risk_level} (1=보수적, 5=공격적)\n\n"
+            "다음은 관련 금융 뉴스·리포트 검색 결과입니다:\n\n"
             f"{context}\n\n"
-            "위 내용을 바탕으로 핵심 사실과 인사이트를 요약해 주세요."
+            "Instructions:\n"
+            "- 위 문서들에 근거하여 한국어로 요약하세요.\n"
+            "- 1) 핵심 요약 (3~5문장)\n"
+            "- 2) 주요 데이터 포인트 (불릿)\n"
+            "- 3) 리스크 및 모니터링 포인트 (불릿)\n"
+            "- 문서에 없는 내용은 추가하지 마세요."
         )
 
         return prompt

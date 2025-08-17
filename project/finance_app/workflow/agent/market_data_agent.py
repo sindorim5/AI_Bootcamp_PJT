@@ -9,14 +9,21 @@ class MarketDataAgent(BaseAgent):
     def __init__(self, rag: bool, langfuse_session_id: str):
         super().__init__(
             system_prompt=(
-                "당신은 숙련된 금융 데이터 분석가(MarketData Agent)입니다. "
-                "사용자가 입력한 주제(topic), 자본금(capital), 위험성향(risk_level)을 바탕으로 "
-                "yfinance-기반 시세, 주요 지수, 금리, 환율 등의 정량적 마켓 데이터를 수집하고, "
-                "이를 사람이 읽기 편한 요약 형태로 가공하여 제공하세요. "
-                "• 종목별 현재가, 등락률을 포함하고\n"
-                "• 지수(S&P500, KOSPI 등)와 환율·금리 동향을 포함하며\n"
-                "• 필요한 경우 간단한 해석(예: “최근 3개월간 상승세” 등)을 덧붙이세요. "
-                "응답은 오직 포맷에 맞는 텍스트로만 반환하고, 불필요한 설명이나 예시는 생략하세요."
+                "You are the MarketData Agent in an AI financial advisor system. "
+                "You will be given pre-fetched yfinance-based quotes for stocks/ETFs and macro indicators "
+                "(indices, interest rates, FX, commodities) in the message context. "
+                "Transform that raw context into a concise, investor-ready summary.\n"
+                "Rules:\n"
+                "- Always answer in Korean.\n"
+                "- Use only the provided context; do not invent or assume missing data.\n"
+                "- Keep numbers/currencies/percentages exactly as shown; do not re-annualize or guess dates.\n"
+                "- If data is missing, write '정보 없음' or omit it.\n"
+                "- No URLs, no tables, no code blocks, no extra commentary.\n"
+                "- Be neutral and factual; no predictions.\n"
+                "Output format:\n"
+                "1) 종목 스냅샷\n"
+                "2) 주요 지표 스냅샷\n"
+                "3) 핵심 코멘트 (2~4문장)\n"
             ),
             rag = rag,
             langfuse_session_id = langfuse_session_id
@@ -51,9 +58,21 @@ class MarketDataAgent(BaseAgent):
         context = state["context"]
 
         prompt = (
-            f"'{topic}'에 대해, 자본금 {capital}만원, 위험성향 {risk_level} (1 ~ 5등급, 숫자가 클수록 공격투자형)\n"
-            "투자자에 대한 최근 시세 데이터와 지표는 다음과 같습니다:\n\n"
+            f"사용자 프로필:\n"
+            f"- 주제: '{topic}'\n"
+            f"- 자본금: {capital}만원\n"
+            f"- 위험성향: {risk_level} (1=보수적, 5=공격적)\n\n"
+            "아래는 yfinance 기반으로 수집된 최근 시세/지표 컨텍스트입니다.:\n\n"
             f"{context}\n\n"
-            "이 데이터를 바탕으로 사용자가 이해하기 쉽게 시장 상황을 분석해 주세요."
+            "작성 지침:\n"
+            "- 위 컨텍스트에 포함된 정보만 사용하세요.\n"
+            "- 숫자·통화 단위·등락률 표기를 그대로 유지하세요.\n"
+            "- '종목 스냅샷'에는 [section: stock] 항목을, '주요 지표 스냅샷'에는 [section: macro] 항목을 요약하세요.\n"
+            "- 각 스냅샷 항목은 다음 형식을 따르세요: '- TICKER(또는 INDICATOR) (이름): 현재가, 변동률'\n"
+            "- 중복 내용은 한 번만 언급하세요. 예측/투자권유는 금지합니다.\n\n"
+            "다음 섹션으로 한국어로만 출력하세요:\n"
+            "1) 종목 스냅샷\n"
+            "2) 주요 지표 스냅샷\n"
+            "3) 핵심 코멘트 (2~4문장)\n"
         )
         return prompt
