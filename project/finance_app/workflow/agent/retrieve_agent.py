@@ -19,7 +19,11 @@ class RetrieveAgent(BaseAgent):
                 "- Summarize only information supported by the retrieved documents.\n"
                 "- Do not fabricate data. If data is missing, clearly state '정보 없음'.\n"
                 "- Highlight key facts, market context, and investor-relevant insights.\n"
-                "- Keep the output compact, structured, and easy to read for a busy investor."
+                "- Keep the output compact, structured, and easy to read for a busy investor.\n"
+                "- Prioritize information from US and Korean economic/financial publications.\n"
+                "- Avoid relying on Chinese language sources unless absolutely necessary.\n"
+                "- Focus on authoritative sources like Bloomberg, Reuters, WSJ, Financial Times, "
+                "한국경제, 매일경제, 이데일리, 서울경제 등."
             ),
             rag = rag,
             langfuse_session_id = langfuse_session_id
@@ -41,7 +45,27 @@ class RetrieveAgent(BaseAgent):
             risk_level=risk_level
             )
 
-        context = super()._format_context(documents)
+        # 중국어 문서 필터링 및 우선순위 조정
+        filtered_documents = []
+        for doc in documents:
+            # 메타데이터에서 출처 확인
+            source = doc.metadata.get("source", "").lower() if hasattr(doc, 'metadata') else ""
+
+            # 미국/한국 경제 전문지 우선
+            priority_sources = [
+                "bloomberg", "reuters", "wsj", "ft.com", "financialtimes",
+                "koreaherald", "koreatimes", "koreajoongangdaily",
+                "hankyung", "mk.co.kr", "edaily", "sedaily", "biz.chosun",
+                "hankookilbo", "donga", "joongang", "chosun"
+            ]
+
+            # 우선순위가 높은 출처는 앞에 배치
+            if any(src in source for src in priority_sources):
+                filtered_documents.insert(0, doc)
+            else:
+                filtered_documents.append(doc)
+
+        context = super()._format_context(filtered_documents)
 
         return {
             **state,
@@ -56,6 +80,9 @@ class RetrieveAgent(BaseAgent):
         risk_level = state["chat_state"]["risk_level"]
         context = state["context"]
 
+        logger.info(f"context: {context}")
+        logger.info(f"state: {state}")
+
         prompt = (
             f"사용자 프로필:\n"
             f"- 주제: '{topic}'\n"
@@ -68,7 +95,10 @@ class RetrieveAgent(BaseAgent):
             "- 1) 핵심 요약 (3~5문장)\n"
             "- 2) 주요 데이터 포인트 (불릿)\n"
             "- 3) 리스크 및 모니터링 포인트 (불릿)\n"
-            "- 문서에 없는 내용은 추가하지 마세요."
+            "- 문서에 없는 내용은 추가하지 마세요.\n"
+            "- 명확히 결과만 표시하고 추가 요청 같은 건 하지 말아주세요.\n"
+            "- 미국과 한국의 경제 전문지 출처를 우선적으로 참고하세요.\n"
+            "- 중국어 문서는 신뢰할 수 있는 번역이 있는 경우에만 참고하세요."
         )
 
         return prompt
