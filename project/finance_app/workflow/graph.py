@@ -8,14 +8,14 @@ from workflow.agent.portfolio_agent import PortfolioAgent
 
 import uuid
 
-def create_graph(rag: bool, langfuse_session_id: str = None) -> StateGraph:
+def create_graph(rag: bool, langfuse_session_id: str = None, plan_enabled: bool = False) -> StateGraph:
     workflow = StateGraph(AgentState)
     langfuse_session_id = langfuse_session_id or str(uuid.uuid4())
 
-    market_data_agent = MarketDataAgent(rag=rag, langfuse_session_id=langfuse_session_id)
-    retrieve_agent = RetrieveAgent(rag=rag, langfuse_session_id=langfuse_session_id)
-    analysis_agent = AnalysisAgent(rag=rag, langfuse_session_id=langfuse_session_id)
-    portfolio_agent = PortfolioAgent(rag=rag, langfuse_session_id=langfuse_session_id)
+    market_data_agent = MarketDataAgent(rag=rag, langfuse_session_id=langfuse_session_id, plan_enabled=plan_enabled)
+    retrieve_agent = RetrieveAgent(rag=rag, langfuse_session_id=langfuse_session_id, plan_enabled=plan_enabled)
+    analysis_agent = AnalysisAgent(rag=rag, langfuse_session_id=langfuse_session_id, plan_enabled=plan_enabled)
+    portfolio_agent = PortfolioAgent(rag=rag, langfuse_session_id=langfuse_session_id, plan_enabled=plan_enabled)
 
 
     workflow.add_node(Agent.MarketData, market_data_agent.run)

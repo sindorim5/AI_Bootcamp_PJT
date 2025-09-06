@@ -4,7 +4,7 @@ from workflow.state import AgentState
 
 
 class AnalysisAgent(BaseAgent):
-    def __init__(self, rag: bool, langfuse_session_id: str):
+    def __init__(self, rag: bool, langfuse_session_id: str, plan_enabled: bool = False):
         super().__init__(
             system_prompt=(
                 "You are the Analysis Agent in an AI financial advisor system. "
@@ -19,7 +19,8 @@ class AnalysisAgent(BaseAgent):
                 "- Avoid generic summaries; focus on why it matters and what could change.\n"
             ),
             rag = rag,
-            langfuse_session_id = langfuse_session_id
+            langfuse_session_id = langfuse_session_id,
+            plan_enabled = plan_enabled
             )
 
     def _retrieve_context(self, state: AgentState) -> AgentState:

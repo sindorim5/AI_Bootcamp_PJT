@@ -4,7 +4,7 @@ from workflow.state import AgentState
 
 
 class PortfolioAgent(BaseAgent):
-    def __init__(self, rag: bool, langfuse_session_id: str):
+    def __init__(self, rag: bool, langfuse_session_id: str, plan_enabled: bool = False):
         super().__init__(
             system_prompt=(
                 "You are the Portfolio Agent in an AI financial advisor system. "
@@ -22,7 +22,8 @@ class PortfolioAgent(BaseAgent):
                 "- After the table, add a brief one- or two-sentence explanation connecting the allocation to the user's risk level and current market context."
             ),
             rag = rag,
-            langfuse_session_id = langfuse_session_id
+            langfuse_session_id = langfuse_session_id,
+            plan_enabled = plan_enabled
         )
 
     def _retrieve_context(self, state: AgentState) -> AgentState:

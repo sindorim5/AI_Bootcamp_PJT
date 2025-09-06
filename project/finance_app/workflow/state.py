@@ -46,3 +46,8 @@ class AgentState(TypedDict):
     context: str                     # 이번 Agent에서 전달할 context (docs 요약 등)
     messages: List[BaseMessage]      # 이번 Agent에서 전달할 LLM messages
     response: str                    # 이번 Agent에서 받은 LLM 응답
+
+    # Plan & Execute (optional)
+    plan: List[str]                  # 현재 에이전트가 수행할 계획 단계 목록
+    past_steps: List[tuple]          # (step, result) 형태의 완료된 단계 기록
+    current_step: str                # 현재 실행 중인 단계 설명
