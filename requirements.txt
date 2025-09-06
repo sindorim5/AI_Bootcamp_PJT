@@ -9,3 +9,7 @@ langgraph>=0.3.2
 faiss-cpu>=1.10.0
 duckduckgo-search==8.1.1
 yfinance>=0.2.61
+sentence-transformers>=2.2.2
+torch>=1.9.0
+transformers>=4.21.0
+plotly>=5.0.0
