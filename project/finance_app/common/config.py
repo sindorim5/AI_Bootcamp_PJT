@@ -19,22 +19,35 @@ logger = logging.getLogger(__name__)
 #     )
 
 def get_llm():
-    return AzureChatOpenAI(
-        openai_api_key   = os.getenv("AOAI_API_KEY"),
-        azure_endpoint=os.getenv("AOAI_ENDPOINT"),
-        api_version = os.getenv("AOAI_API_VERSION"),
-        deployment_name  = os.getenv("AOAI_DEPLOY_GPT4O_MINI"),
-        temperature      = 0.7,
-        streaming=True
-    )
+    try:
+        return AzureChatOpenAI(
+            openai_api_key=os.getenv("AOAI_API_KEY"),
+            azure_endpoint=os.getenv("AOAI_ENDPOINT"),
+            api_version=os.getenv("AOAI_API_VERSION", "2024-02-01"),
+            azure_deployment=os.getenv("AOAI_DEPLOY_GPT5_MINI"),
+            streaming=True
+        )
+    except Exception as e:
+        logger.error(f"Azure OpenAI LLM 초기화 실패: {str(e)}")
+        logger.error(f"ENDPOINT: {os.getenv('AOAI_ENDPOINT')}")
+        logger.error(f"DEPLOYMENT: {os.getenv('AOAI_DEPLOY_GPT5_MINI')}")
+        logger.error(f"API_VERSION: {os.getenv('AOAI_API_VERSION')}")
+        raise
 
 def get_embeddings():
-    return AzureOpenAIEmbeddings(
-        model=os.getenv("AOAI_DEPLOY_EMBED_3_SMALL"),
-        openai_api_version=os.getenv("AOAI_EMBED_API_VERSION"),
-        api_key=os.getenv("AOAI_API_KEY"),
-        azure_endpoint=os.getenv("AOAI_ENDPOINT"),
-    )
+    try:
+        return AzureOpenAIEmbeddings(
+            model=os.getenv("AOAI_DEPLOY_EMBED_3_SMALL", "text-embedding-3-small"),
+            openai_api_version=os.getenv("AOAI_EMBED_API_VERSION", "2024-02-01"),
+            api_key=os.getenv("AOAI_API_KEY"),
+            azure_endpoint=os.getenv("AOAI_ENDPOINT"),
+        )
+    except Exception as e:
+        logger.error(f"Azure OpenAI Embeddings 초기화 실패: {str(e)}")
+        logger.error(f"ENDPOINT: {os.getenv('AOAI_ENDPOINT')}")
+        logger.error(f"MODEL: {os.getenv('AOAI_DEPLOY_EMBED_3_SMALL')}")
+        logger.error(f"API_VERSION: {os.getenv('AOAI_EMBED_API_VERSION')}")
+        raise
 
 
 def get_langfuse():

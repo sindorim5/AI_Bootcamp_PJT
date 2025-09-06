@@ -10,6 +10,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 관련된 종목 찾기
+
+
 def suggest_related_tickers(
     topic: str, capital: float, risk_level: int
 ) -> List[str]:
@@ -21,9 +23,50 @@ def suggest_related_tickers(
         "예시: 005930.KS, NVDA, ^GSPC 처럼 반환하세요. 설명은 절대 하지 마세요."
     )
 
+    system_prompt = ("""
+        Role: You are a "yfinance ticker selector".
+        Your job is to select exactly 5 valid yfinance tickers strictly following the rules.
+
+        Forbidden:
+        - Any explanation, description, reasoning, or commentary
+        - Extra whitespace, line breaks, bullets, or numbering
+        - Company names without tickers, ISINs, or other identifiers
+
+        Required:
+        - Exactly 5 tickers
+        - Output in one single line, separated by commas
+        - Must be valid yfinance format(e.g., 005930.KS, NVDA, ^ GSPC, BTC-USD, CL=F)
+
+        Risk rules:
+        - Risk level 1–2: Focus on indexes/ETFs(2–3), large-cap defensive stocks(1–2), optional hedge(0–1)
+        - Risk level 3: Balanced between indexes/ETFs(2), mega-cap leaders(2), growth/sector theme(1)
+        - Risk level 4–5: Growth and sector leaders(3–4), indexes/hedge(1–2)
+
+        Regional suffix hints:
+        - Korea KOSPI: .KS, KOSDAQ: .KQ
+        - Japan: .T, UK: .L, Hong Kong: .HK, Shanghai: .SS
+        - Index: ^ GSPC(S & P 500), ^ IXIC(NASDAQ), ^ KS11(KOSPI)
+        - Commodities: CL=F(WTI), GC=F(Gold)
+        - FX: USDKRW=X
+        - Crypto: BTC-USD, ETH-USD
+
+        Output language:
+        - Output tickers only(no explanation).
+    """)
+
+    human_prompt = (f"""
+        Topic: '{topic}'
+        Capital: {capital} (in KRW, 만원 unit)
+        Risk level: {risk_level}(1=conservative, 5=aggressive)
+
+        Task:
+        Return exactly 5 related yfinance tickers in one line, separated by commas.
+        Do not explain.
+    """)
+
     messages = [
-        SystemMessage(content="당신은 금융 데이터 전문가입니다. 사용자가 궁금해하는 주제에 대해 종목 ticker를 반환하세요."),
-        HumanMessage(content=prompt),
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=human_prompt),
     ]
 
     response = get_llm().invoke(messages)
@@ -48,7 +91,7 @@ def fetch_stock_data(tickers: List[str]) -> List[Document]:
         # 멀티티커 → DataFrame, 단일티커 → Series 형태일 수 있음
         try:
             close_val = data["Close"][ticker].iloc[-1]
-            open_val  = data["Open"][ticker].iloc[-1]
+            open_val = data["Open"][ticker].iloc[-1]
         except (KeyError, IndexError, TypeError):
             # 컬럼이 없거나 빈 Series 인 경우
             doc = Document(
@@ -122,10 +165,10 @@ def fetch_macro_data() -> List[Document]:
     #   * yfinance 0.2.x: ('Price','Close',ticker)
     if data.columns.nlevels == 3:
         close_df = data.xs("Close", level=1, axis=1)
-        open_df  = data.xs("Open",  level=1, axis=1)
+        open_df = data.xs("Open",  level=1, axis=1)
     else:
         close_df = data["Close"]
-        open_df  = data["Open"]
+        open_df = data["Open"]
 
     documents: List[Document] = []
 
@@ -136,7 +179,7 @@ def fetch_macro_data() -> List[Document]:
 
         # 최근 유효값 추출(dropna 로 NaN 제거)
         close_series = close_df[ticker].dropna()
-        open_series  = open_df[ticker].dropna()
+        open_series = open_df[ticker].dropna()
 
         if close_series.empty or open_series.empty:
             # 데이터 완전 없음
@@ -153,7 +196,7 @@ def fetch_macro_data() -> List[Document]:
             continue
 
         close_val = close_series.iloc[-1]
-        open_val  = open_series.iloc[-1]
+        open_val = open_series.iloc[-1]
 
         # NaN 방어(혹시 남아 있을 경우)
         if _is_nan(close_val) or _is_nan(open_val):
@@ -184,6 +227,7 @@ def fetch_macro_data() -> List[Document]:
         )
 
     return documents
+
 
 def _is_nan(x) -> bool:
     return x != x
