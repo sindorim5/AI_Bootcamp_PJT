@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class RetrieveAgent(BaseAgent):
-    def __init__(self, rag: bool, langfuse_session_id: str, use_cross_encoder: bool = True):
+    def __init__(self, rag: bool, langfuse_session_id: str, use_cross_encoder: bool = True, plan_enabled: bool = False):
         super().__init__(
             system_prompt=(
                 "You are the Retrieve Agent in an AI financial advisor system. "
@@ -27,7 +27,8 @@ class RetrieveAgent(BaseAgent):
                 "한국경제, 매일경제, 이데일리, 서울경제 등."
             ),
             rag = rag,
-            langfuse_session_id = langfuse_session_id
+            langfuse_session_id = langfuse_session_id,
+            plan_enabled = plan_enabled
             )
         self.use_cross_encoder = use_cross_encoder
 

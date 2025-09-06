@@ -6,7 +6,7 @@ from common.constants import Agent
 
 
 class MarketDataAgent(BaseAgent):
-    def __init__(self, rag: bool, langfuse_session_id: str):
+    def __init__(self, rag: bool, langfuse_session_id: str, plan_enabled: bool = False):
         super().__init__(
             system_prompt=(
                 "You are the MarketData Agent in an AI financial advisor system. "
@@ -25,7 +25,8 @@ class MarketDataAgent(BaseAgent):
                 "3) 핵심 코멘트 (2~4문장)\n"
             ),
             rag = rag,
-            langfuse_session_id = langfuse_session_id
+            langfuse_session_id = langfuse_session_id,
+            plan_enabled = plan_enabled
             )
 
     def _retrieve_context(self, state: AgentState) -> AgentState:
