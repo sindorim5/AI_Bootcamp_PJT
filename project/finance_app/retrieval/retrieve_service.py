@@ -35,7 +35,7 @@ def generate_finance_queries(topic: str, capital: float, risk_level: int) -> Lis
         """)
 
         user_prompt = (
-            f"For the topic '{topic}', considering capital {capital} (KRW, 만원 unit) "
+            f"For the topic '{topic}', considering capital {capital} * 10000 (KRW) "
             f"and risk level {risk_level} (1=conservative, 5=aggressive), "
             "propose exactly 3 high-signal web search queries to retrieve timely and reliable "
             "financial news/reports.\n"
@@ -44,9 +44,7 @@ def generate_finance_queries(topic: str, capital: float, risk_level: int) -> Lis
             "- Return a single line with 3 queries, comma-separated. Do NOT add any explanation or extra text.\n"
             "- Prefer authoritative sources and recent information (last 90 days) where possible.\n"
             "- Use English keywords; include relevant tickers/indexes when appropriate (e.g., NVDA, ^GSPC, 005930.KS, USDKRW=X).\n"
-            "- Exclude low-signal Korean portals/forums using operators: "
-            "  -site:blog.naver.com -site:stock.naver.com -site:cafe.naver.com -site:naver.com -site:dcinside.com\n"
-            "- Consider helpful operators when relevant: quotes, AND/OR, site:, intitle:, filetype:pdf.\n"
+            "- Exclude low-signal Korean portals/forums using operators. \n"
             "Output format (exactly one line): <query1>, <query2>, <query3>"
         )
 

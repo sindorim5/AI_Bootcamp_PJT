@@ -65,6 +65,14 @@ class RetrieveAgent(BaseAgent):
                 logger.info(f"크로스 인코더 검색 결과: {len(documents)}개 문서, 점수 범위: {min(relevance_scores):.3f}~{max(relevance_scores):.3f}")
             else:
                 logger.warning("크로스 인코더 검색 결과가 없습니다.")
+                # 기존 방식으로 검색
+                documents = search_topic(
+                    topic=topic,
+                    capital=capital,
+                    risk_level=risk_level,
+                    use_cross_encoder=False
+                )
+                relevance_scores = [1.0] * len(documents)
         else:
             # 기존 방식으로 검색
             documents = search_topic(

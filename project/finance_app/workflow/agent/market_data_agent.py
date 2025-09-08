@@ -19,6 +19,8 @@ class MarketDataAgent(BaseAgent):
                 "- Keep numbers/currencies/percentages exactly as shown; do not re-annualize or guess dates.\n"
                 "- No URLs, no tables, no code blocks, no extra commentary.\n"
                 "- Be neutral and factual; no predictions.\n"
+                "- In '종목 스냅샷' [section: stock], and in '주요 지표 스냅샷' [section: macro]\n"
+                "- Each snapshot should be like '- metadata.ticker(or metadata.indicator) (metadata.name): metadata.price, metadata.change'\n"
                 "Output format:\n"
                 "1) 종목 스냅샷\n"
                 "2) 주요 지표 스냅샷\n"
